@@ -1,0 +1,61 @@
+#!/usr/bin/python 
+import socket 
+import select 
+import sys 
+import re
+from _thread import *
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+if len(sys.argv)!=3: 
+	print ("Correct usage: script IP address port number nickname")
+	sys.exit() 
+
+cmd = (sys.argv[1])
+c = cmd.split(':')
+IP_address = str(c[0]) 
+Port = int(c[1]) 
+nickname = str(sys.argv[2])
+
+server.connect((IP_address,Port))
+res0 = server.recv(2048).decode('utf-8')
+print(res0)
+
+nickame = 'NICK' + nickname
+
+server.sendall(nickname.encode('utf-8'))
+res1 = server.recv(2048).decode('utf-8')
+print(res1)
+
+if res1 == 'OK':
+	pass
+elif res1 == "nickname":
+	print('disconnected')
+
+sys.exit()
+
+
+while True: 
+
+	
+	sockets_list = [sys.stdin, server] 
+
+	read_sockets,write_socket, error_socket= select.select(sockets_list,[],[]) 
+
+	for sockets in read_sockets: 
+		if sockets == server: 
+			message = sockets.recv(2048).decode('utf-8') 
+			print (message) 
+		else: 
+			message = sys.stdin.readline()
+ 
+			message = 'MSG'+ message
+			if message == '\n':
+				continue
+			else:
+			 server.sendall(message.encode('utf-8')) 
+			 sys.stdout.write(message) 
+			 sys.stdout.flush() 
+server.close() 
+
