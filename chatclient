@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import socket
+import socket.
 import sys
 from _thread import *
 import select 
