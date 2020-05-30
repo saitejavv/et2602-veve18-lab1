@@ -1,61 +1,69 @@
-#!/usr/bin/python 
-import socket 
-import select 
-import sys 
-import re
+#!/usr/bin/python3
+
+import socket
+import sys
 from _thread import *
+import select 
+import re 
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+if len(sys.argv)!=3:
+    print("All inputs are correct")
+    sys.exit()
 
-if len(sys.argv)!=3: 
-	print ("Correct usage: script IP address port number nickname")
-	sys.exit() 
+Main_Server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-cmd = (sys.argv[1])
-c = cmd.split(':')
-IP_address = str(c[0]) 
-Port = int(c[1]) 
-nickname = str(sys.argv[2])
-
-server.connect((IP_address,Port))
-res0 = server.recv(2048).decode('utf-8')
-print(res0)
-
-nickame = 'NICK' + nickname
-
-server.sendall(nickname.encode('utf-8'))
-res1 = server.recv(2048).decode('utf-8')
-print(res1)
-
-if res1 == 'OK':
-	pass
-elif res1 == "nickname":
-	print('disconnected')
-
-sys.exit()
+Main_Server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 
-while True: 
 
-	
-	sockets_list = [sys.stdin, server] 
+Command = (sys.argv[1])
+c=Command.split(':')
+ip_address=str(c[0])
+port=int(c[1])
+nick=str(sys.argv[2])
 
-	read_sockets,write_socket, error_socket= select.select(sockets_list,[],[]) 
 
-	for sockets in read_sockets: 
-		if sockets == server: 
-			message = sockets.recv(2048).decode('utf-8') 
-			print (message) 
-		else: 
-			message = sys.stdin.readline()
- 
-			message = 'MSG'+ message
-			if message == '\n':
-				continue
-			else:
-			 server.sendall(message.encode('utf-8')) 
-			 sys.stdout.write(message) 
-			 sys.stdout.flush() 
-server.close() 
+Main_Server.connect((ip_address, port))
+
+Message1=Main_Server.recv(2048).decode('utf-8')
+
+print(Message1)
+
+nick = 'NICK ' + nick
+
+
+Main_Server.sendall(nick.encode('utf-8'))
+
+Reply=Main_Server.recv(2048).decode('utf-8')
+print(Reply)
+if Reply == "OK":
+    pass
+elif Reply == "Oops! Err nick name":
+    print('Disconnecting')
+    sys.exit()
+    
+    
+
+
+
+while True:
+    socket_list=[sys.stdin, Main_Server]
+    
+
+    read_sockets,write_sockets,error_sockets=select.select(socket_list,[],[])
+    
+    for sockets in read_sockets:
+        if sockets == Main_Server:
+            info = sockets.recv(2048).decode('utf-8')
+            print(info)
+        else:
+            info=sys.stdin.readline()
+            
+            info = 'message_from '+ info
+            if info == '\n':
+                continue
+            else:
+                Main_Server.sendall(info.encode('utf-8'))
+                
+Main_Server.close()
 
