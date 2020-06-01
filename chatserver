@@ -6,7 +6,7 @@ import select
 import re 
 
 if len(sys.argv)!=2:
-    print("Correct script on server side ")
+    print("Input format should be ./chatserver ip:port")
     sys.exit()
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
