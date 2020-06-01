@@ -6,27 +6,27 @@ import select
 import re 
 
 if len(sys.argv)!=2:
-    print("Correct Script on server side")
+    print("Correct script on server side ")
     sys.exit()
 
-Main_Server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-Main_Server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 
-Command = (sys.argv[1])
-c=Command.split(':')
-ip_address=str(c[0])
-port=int(c[1])
+Info = (sys.argv[1])
+a=Info.split(':')
+IP_addr=str(a[0])
+port=int(a[1])
 
-Main_Server.bind((ip_address,port))
+server.bind((IP_addr,port))
 
-Main_Server.listen(100)
+server.listen(100)
 
-print('Server is up and running. Client can connect ')
+print('Server is up and running. Client can connect')
 
 
 clients=[]
-clients.append(Main_Server)
+clients.append(server)
 
 def clientthread(conn,addr):
     while True:
@@ -34,16 +34,16 @@ def clientthread(conn,addr):
         try:
             nick=conn.recv(2048).decode('utf-8')
             nick1=nick.strip('NICK ')
-            recomp = re.compile('[@!#$%^&*()?/|}:]')
+            regex = re.compile('[@!#$%^&*()?/|}{~:]')
             
-            if(recomp.search(nick1) == None) and len(nick1)<=12 and 'NICK ' in nick :
+            if(regex.search(nick1) == None) and len(nick1)<=12 and 'NICK ' in nick :
                 conn.sendall('OK'.encode('utf-8'))
                 break
-            elif len(nick1) or recomp.search(nick1) != None:
-                conn.sendall('Oops! something wrong in nick name'.encode('utf-8'))
+            elif len(nick1) or regex.search(nick1) != None:
+                conn.sendall('ERR malformed nick name'.encode('utf-8'))
             else:
                 conn.close()
-                print(addr[0]+" is Disconnected")
+                print(addr[0]+" has disconnected")
                 clients.remove(conn)
                 del clients[conn]
                 break
@@ -55,25 +55,25 @@ def clientthread(conn,addr):
     while True:
         try:
             if conn in clients:
-                info = conn.recv(2048).decode('utf-8')
-                msg1=info.strip('message_from ')
+                message = conn.recv(2048).decode('utf-8')
+                message1=message.strip('MSG ')
                 
             
-                if not info:
+                if not message:
                     conn.close()
                     print(addr[0]+" has disconnected")
                     clients.remove(conn)
                     break 
 
-                elif 'message_from ' not in info:
-                    conn.sendall('ERROR in info'.encode('utf-8'))
+                elif 'MSG ' not in message:
+                    conn.sendall('ERROR malformed message'.encode('utf-8'))
                 else:
 
                 
-                    if len(msg1)<=255 :
+                    if len(message1)<=255 :
                     
                         count=0
-                        for i in msg1[:-1]:
+                        for i in message1[:-1]:
                             if ord(i)<31:
                             
                                 count = count +1
@@ -82,13 +82,13 @@ def clientthread(conn,addr):
                                 pass
                     #else if and next elif        
                         if count != 0:
-                            conn.sendall('Oops! characters are not supposed to be used'.encode('utf-8'))
+                            conn.sendall('ERROR -> dont use control characters'.encode('utf-8'))
                         else:
-                            sending_msg = 'message_from '+nick1+' ' + msg1[:-1]
+                            message_to_send = 'MSG '+nick1+' ' + message1[:-1]
                 
-                            broadcasting(sending_msg,conn,nick1)
-                    elif len(msg1) > 255 :
-                        conn.sendall('Oops message length is more than 256 characters'.encode('utf-8'))
+                            broadcasting(message_to_send,conn,nick1)
+                    elif len(message1) > 255 :
+                        conn.sendall('ERROR -> message length exceeding 256 characters'.encode('utf-8'))
                    
                 
 
@@ -96,11 +96,11 @@ def clientthread(conn,addr):
             conn.close()
             break
 
-def broadcasting(info,connection,nick1):
+def broadcasting(message,connection,nick1):
     for sockets in clients:
-        if sockets!= Main_Server:
+        if sockets!= server:
             try:
-                sockets.sendall(info.encode('utf-8'))
+                sockets.sendall(message.encode('utf-8'))
             except KeyboardInterrupt:
                     clients.remove(sockets)
                     break 
@@ -108,7 +108,7 @@ def broadcasting(info,connection,nick1):
 
 
 while True:
-    conn,addr=Main_Server.accept()
+    conn,addr=server.accept()
     
     conn.sendall('Hello 1'.encode('utf-8'))
     clients.append(conn)
@@ -118,5 +118,5 @@ while True:
     
 
 conn.close()
-Main_Server.close()     
+server.close()     
 

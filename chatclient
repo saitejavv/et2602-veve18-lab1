@@ -10,35 +10,35 @@ if len(sys.argv)!=3:
     print("All inputs are correct")
     sys.exit()
 
-Main_Server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-Main_Server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 
-
-Command = (sys.argv[1])
-c=Command.split(':')
-ip_address=str(c[0])
-port=int(c[1])
+Info = (sys.argv[1])
+a=Info.split(':')
+IP_addr=str(a[0])
+port=int(a[1])
 nick=str(sys.argv[2])
 
 
-Main_Server.connect((ip_address, port))
+server.connect((IP_addr, port))
 
-Message1=Main_Server.recv(2048).decode('utf-8')
+first_msg=server.recv(2048).decode('utf-8')
 
-print(Message1)
+print(first_msg)
 
 nick = 'NICK ' + nick
 
 
-Main_Server.sendall(nick.encode('utf-8'))
+server.sendall(nick.encode('utf-8'))
 
-Reply=Main_Server.recv(2048).decode('utf-8')
-print(Reply)
-if Reply == "OK":
+ok_msg=server.recv(2048).decode('utf-8')
+print(ok_msg)
+if ok_msg == "OK":
     pass
-elif Reply == "Oops! Err nick name":
+elif ok_msg == "Oops! Error in nickname":
+    print('check that your nick name does not have any special characters,limit upto 12 characters')
     print('Disconnecting')
     sys.exit()
     
@@ -47,23 +47,23 @@ elif Reply == "Oops! Err nick name":
 
 
 while True:
-    socket_list=[sys.stdin, Main_Server]
+    socket_list=[sys.stdin, server]
     
 
     read_sockets,write_sockets,error_sockets=select.select(socket_list,[],[])
     
     for sockets in read_sockets:
-        if sockets == Main_Server:
-            info = sockets.recv(2048).decode('utf-8')
-            print(info)
+        if sockets == server:
+            message = sockets.recv(2048).decode('utf-8')
+            print(message)
         else:
-            info=sys.stdin.readline()
+            message=sys.stdin.readline()
             
-            info = 'message_from '+ info
-            if info == '\n':
+            message = 'MSG '+ message
+            if message == '\n':
                 continue
             else:
-                Main_Server.sendall(info.encode('utf-8'))
+                server.sendall(message.encode('utf-8'))
                 
-Main_Server.close()
+server.close()
 
